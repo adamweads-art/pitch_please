@@ -192,10 +192,9 @@ export default function MatchweekBoard() {
         <h1 className="mw-title">{data.label}</h1>
         <div className="mw-sub">
           <span className="mw-range">{data.range}</span>
-          <span className="mw-sample">Sample data</span>
         </div>
         <p className="mw-lede">
-          Every game across five leagues, ranked by how worth-watching it is. Turn the dials to
+          Every game across {leagueKeys.length} leagues, ranked by how worth-watching it is. Turn the dials to
           decide what "worth watching" means to you.
         </p>
       </header>
@@ -283,8 +282,8 @@ export default function MatchweekBoard() {
       <footer className="mw-foot">
         <p>
           Score = a weighted blend of four signals per game: rivalry, table stakes, star power and
-          recent form. In production these come from API-Football, and this exact blend becomes your
-          Airtable formula.
+          recent form. Fixtures and standings come from football-data.org, payroll-based star power
+          ratings live in Airtable, and this whole board refreshes automatically every Tuesday.
         </p>
       </footer>
     </div>
@@ -323,7 +322,7 @@ function HotCard({ fx, league, rank }) {
         {fx.tags.map((t) => <span key={t} className="tag">{t}</span>)}
       </div>
       <div className="hot-bottom">
-        <span className="kick">{fx.day} · {fx.time}</span>
+        <span className="kick">{fx.day} {fx.date} · {fx.time}</span>
         <span className="readout">{fx.score}</span>
       </div>
     </article>
@@ -339,7 +338,7 @@ function Row({ fx, league }) {
         <div className="row-teams">{fx.h} <span className="v">v</span> {fx.a}</div>
         <div className="row-tags">{fx.tags.map((t) => <span key={t} className="tag sm">{t}</span>)}</div>
       </div>
-      <span className="row-kick">{fx.day}<br />{fx.time}</span>
+      <span className="row-kick">{fx.day} {fx.date}<br />{fx.time}</span>
       <Meter sig={fx.sig} />
       <span className="row-score readout">{fx.score}</span>
     </div>
