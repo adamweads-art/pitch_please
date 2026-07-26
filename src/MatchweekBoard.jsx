@@ -15,6 +15,7 @@ const FEED_URL =
   "https://raw.githubusercontent.com/adamweads-art/pitch_please/main/matchweek.json";
 
 const WEEKDAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTH = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 function adaptFeed(raw) {
   const leagues = {};
@@ -40,7 +41,7 @@ function adaptFeed(raw) {
         h: f["Home Team Name"] || "TBD",
         a: f["Away Team Name"] || "TBD",
         day: kickoff ? WEEKDAY[kickoff.getDay()] : "",
-        date: kickoff ? String(kickoff.getDate()).padStart(2, "0") : "",
+        date: kickoff ? `${kickoff.getDate()} ${MONTH[kickoff.getMonth()]}` : "",
         time: kickoff
           ? kickoff.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })
           : "",
