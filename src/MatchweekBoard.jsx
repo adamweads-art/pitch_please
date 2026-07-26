@@ -121,6 +121,10 @@ export default function MatchweekBoard() {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [reloadTick, setReloadTick] = useState(0);
+  const [active, setActive] = useState({});
+  const [group, setGroup] = useState("score"); // "score" | "day"
+  const [tuning, setTuning] = useState(false);
+  const [w, setW] = useState({ r: 35, s: 30, st: 20, f: 15 });
 
   useEffect(() => {
     let cancelled = false;
@@ -139,20 +143,19 @@ export default function MatchweekBoard() {
     return () => { cancelled = true; };
   }, [reloadTick]);
 
-  if (error) return <ErrorState message={error} onRetry={() => setReloadTick((t) => t + 1)} />;
-  if (!data) return <Loading />;
+  // Once the feed arrives, seed the league toggles and scoring weights from it.
+  useEffect(() => {
+    if (data) {
+      setActive(Object.fromEntries(Object.keys(data.leagues).map((k) => [k, true])));
+      setW(data.weights);
+    }
+  }, [data]);
 
-  const leagueKeys = Object.keys(data.leagues);
-  const allOnObj = Object.fromEntries(leagueKeys.map((k) => [k, true]));
-
-  const [active, setActive] = useState(allOnObj);
-  const [group, setGroup] = useState("score"); // "score" | "day"
-  const [tuning, setTuning] = useState(false);
-  const [w, setW] = useState(data.weights);
+  const leagueKeys = data ? Object.keys(data.leagues) : [];
 
   const scored = useMemo(
-    () => data.fixtures.map((fx) => ({ ...fx, score: scoreOf(fx, w) })),
-    [data.fixtures, w]
+    () => (data ? data.fixtures.map((fx) => ({ ...fx, score: scoreOf(fx, w) })) : []),
+    [data, w]
   );
   const filtered = useMemo(() => scored.filter((fx) => active[fx.lg]), [scored, active]);
   const highlights = useMemo(
@@ -169,6 +172,13 @@ export default function MatchweekBoard() {
       items: filtered.filter((fx) => fx.day === d).sort((a, b) => b.score - a.score),
     })).filter((g) => g.items.length);
   }, [filtered, group]);
+
+  // Hooks above this line always run, in the same order, every render.
+  // Only now is it safe to branch on loading/error state.
+  if (error) return <ErrorState message={error} onRetry={() => setReloadTick((t) => t + 1)} />;
+  if (!data) return <Loading />;
+
+  const allOnObj = Object.fromEntries(leagueKeys.map((k) => [k, true]));
 
   const toggle = (lg) => setActive((s) => ({ ...s, [lg]: !s[lg] }));
   const allOn = leagueKeys.every((k) => active[k]);
