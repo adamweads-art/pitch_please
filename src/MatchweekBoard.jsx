@@ -40,6 +40,8 @@ function adaptFeed(raw) {
         lg: f["League Code"],
         h: f["Home Team Name"] || "TBD",
         a: f["Away Team Name"] || "TBD",
+        hCrest: f["Home Crest"] || "",
+        aCrest: f["Away Crest"] || "",
         day: kickoff ? WEEKDAY[kickoff.getDay()] : "",
         date: kickoff ? `${kickoff.getDate()} ${MONTH[kickoff.getMonth()]}` : "",
         time: kickoff
@@ -291,6 +293,20 @@ export default function MatchweekBoard() {
   );
 }
 
+function Crest({ src }) {
+  const [broken, setBroken] = useState(!src);
+  if (broken) return <span className="crest crest-blank" aria-hidden />;
+  return (
+    <img
+      className="crest"
+      src={src}
+      alt=""
+      loading="lazy"
+      onError={() => setBroken(true)}
+    />
+  );
+}
+
 function Meter({ sig }) {
   return (
     <div className="meter" aria-hidden>
@@ -315,9 +331,9 @@ function HotCard({ fx, league, rank }) {
         <span className="rank">No. {rank}</span>
       </div>
       <div className="hot-teams">
-        <span>{fx.h}</span>
+        <span className="team-line"><Crest src={fx.hCrest} />{fx.h}</span>
         <span className="v">v</span>
-        <span>{fx.a}</span>
+        <span className="team-line"><Crest src={fx.aCrest} />{fx.a}</span>
       </div>
       <div className="hot-tags">
         {fx.tags.map((t) => <span key={t} className="tag">{t}</span>)}
@@ -336,7 +352,9 @@ function Row({ fx, league }) {
     <div className="row" style={{ "--g": g }}>
       <span className="row-lg" style={{ background: league.chip }} title={league.name} />
       <div className="row-main">
-        <div className="row-teams">{fx.h} <span className="v">v</span> {fx.a}</div>
+        <div className="row-teams">
+          <Crest src={fx.hCrest} />{fx.h} <span className="v">v</span> <Crest src={fx.aCrest} />{fx.a}
+        </div>
         <div className="row-tags">{fx.tags.map((t) => <span key={t} className="tag sm">{t}</span>)}</div>
       </div>
       <span className="row-kick">{fx.day} {fx.date}<br />{fx.time}</span>
@@ -464,6 +482,12 @@ const CSS = `
 .meter-fill{width:100%;background:linear-gradient(180deg,var(--amber),rgba(242,169,74,.45));border-radius:3px;}
 .meter-lab{font-size:9px;color:var(--muted);font-family:'Spline Sans Mono';}
 
+.crest{width:20px;height:20px;object-fit:contain;flex:none;vertical-align:middle;}
+.crest-blank{display:inline-block;border-radius:50%;background:var(--line2);}
+.team-line{display:inline-flex;align-items:center;gap:8px;}
+.hot-teams .crest{width:26px;height:26px;}
+.row-teams{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.row-teams .crest{width:18px;height:18px;}
 .empty{color:var(--muted);padding:30px 0;text-align:center;font-size:15px;max-width:52ch;margin:0 auto;line-height:1.6;}
 
 .mw-status{display:flex;align-items:center;justify-content:center;min-height:280px;}
