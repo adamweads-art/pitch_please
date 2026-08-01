@@ -197,8 +197,8 @@ export default function MatchweekBoard() {
           <span className="mw-range">{data.range}</span>
         </div>
         <p className="mw-lede">
-          Every game across {leagueKeys.length} leagues, ranked by how worth-watching it is. Turn the dials to
-          decide what "worth watching" means to you.
+          Every game across multiple leagues, ranked by how much it deserves your weekend. The dials
+          are there because you'll disagree. Refreshed every Tuesday.
         </p>
       </header>
 
