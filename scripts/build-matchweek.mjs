@@ -219,6 +219,76 @@ async function loadEspn(league, windowDays) {
   return { teams, fixtures };
 }
 
+
+// ---------------------------------------------------------------------------
+// Choosing which fixtures to publish
+//
+// The fetch window is deliberately wide so leagues starting weeks from now are
+// still discovered. What gets *published* is narrower, and controlled by
+// config.publishMode:
+//
+//   "weekend" - just the next Fri-Mon block of football (the default). Midweek
+//               fixtures are excluded, which is the point.
+//   "days"    - anchor on the earliest fixture and take config.publishDays
+//               forward from there. Use this if you want midweek games too.
+// ---------------------------------------------------------------------------
+
+const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+/**
+ * The Fri 00:00 - Mon 23:59 block (UTC) that a given date belongs to.
+ * Fri/Sat/Sun/Mon map to the block they sit in. Tue/Wed/Thu roll forward to
+ * the coming Friday, since a midweek game isn't part of a weekend.
+ */
+function weekendBlockFor(date) {
+  const d = new Date(date);
+  const dow = d.getUTCDay(); // 0=Sun .. 6=Sat
+  const backToFriday = { 5: 0, 6: 1, 0: 2, 1: 3 };
+  const shift = dow in backToFriday ? backToFriday[dow] : -((5 - dow + 7) % 7);
+  const start = new Date(Date.UTC(
+    d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - shift, 0, 0, 0, 0
+  ));
+  const end = new Date(start.getTime() + 4 * 864e5 - 1); // through Mon 23:59:59
+  return { start, end };
+}
+
+function formatRange(start, end) {
+  const f = (d) => `${DAY_NAMES[d.getUTCDay()]} ${d.getUTCDate()} ${MONTH_NAMES[d.getUTCMonth()]}`;
+  return `${f(start)} - ${f(end)}`;
+}
+
+function selectPublished(fixtures, config) {
+  if (!fixtures.length) return { published: [], rangeLabel: "" };
+
+  const mode = config.publishMode || "weekend";
+
+  if (mode === "days") {
+    const anchor = new Date(fixtures[0].kickoff).getTime();
+    const cutoff = anchor + (config.publishDays ?? 9) * 864e5;
+    const published = fixtures.filter((f) => new Date(f.kickoff).getTime() <= cutoff);
+    return { published, rangeLabel: "" };
+  }
+
+  // Weekend mode. Walk forward through fixtures until we find one that sits in
+  // a weekend block containing actual games, so an all-midweek round (or a
+  // stray friendly on a Wednesday) doesn't produce an empty board.
+  for (const fx of fixtures) {
+    const { start, end } = weekendBlockFor(fx.kickoff);
+    const inBlock = fixtures.filter((f) => {
+      const t = new Date(f.kickoff).getTime();
+      return t >= start.getTime() && t <= end.getTime();
+    });
+    if (inBlock.length) {
+      return { published: inBlock, rangeLabel: formatRange(start, end) };
+    }
+  }
+
+  // Nothing landed on a weekend at all; fall back to everything we have rather
+  // than publishing an empty feed.
+  return { published: fixtures, rangeLabel: "" };
+}
+
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
@@ -319,17 +389,13 @@ async function main() {
   // the board always shows "the next matchweek" rather than whatever happens
   // to fall inside a fixed window.
   allFixtures.sort((a, b) => new Date(a.kickoff) - new Date(b.kickoff));
-  let published = allFixtures;
-  if (allFixtures.length) {
-    const anchor = new Date(allFixtures[0].kickoff).getTime();
-    const cutoff = anchor + 9 * 864e5;
-    published = allFixtures.filter((f) => new Date(f.kickoff).getTime() <= cutoff);
-  }
+  const { published, rangeLabel } = selectPublished(allFixtures, config);
 
   const feed = {
     label: "Pitch, Please",
     generatedAt: new Date().toISOString().slice(0, 10),
     weights: config.weights,
+    range: rangeLabel,
     leagues: leaguesOut.filter((l) => published.some((f) => f.lg === l.code)),
     fixtures: published,
   };
