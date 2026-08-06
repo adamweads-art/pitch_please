@@ -16,46 +16,45 @@ const FEED_URL =
 
 const WEEKDAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTH = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const DAY_FULL = {
+  Sun: "Sunday", Mon: "Monday", Tue: "Tuesday", Wed: "Wednesday",
+  Thu: "Thursday", Fri: "Friday", Sat: "Saturday",
+};
 
 function adaptFeed(raw) {
   const leagues = {};
-  for (const rec of raw.leagues || []) {
-    const f = rec.fields || {};
-    const code = f["Competition Code"];
-    if (!code) continue;
-    leagues[code] = {
-      name: f["League Name"] || code,
-      short: f["Short Name"] || code,
-      chip: f["Chip Color"] || "#8892A0",
+  for (const l of raw.leagues || []) {
+    if (!l.code) continue;
+    leagues[l.code] = {
+      name: l.name || l.code,
+      short: l.short || l.code,
+      chip: l.chip || "#8892A0",
     };
   }
 
   const fixtures = (raw.fixtures || [])
-    .map((rec, i) => {
-      const f = rec.fields || {};
-      const kickoff = f["Kickoff"] ? new Date(f["Kickoff"]) : null;
-      const tags = [f["Rivalry Tag"], ...(f["Tags"] || [])].filter(Boolean);
+    .map((f, i) => {
+      const kickoff = f.kickoff ? new Date(f.kickoff) : null;
       return {
-        id: f["Fixture ID"] || rec.id || i,
-        lg: f["League Code"],
-        h: f["Home Team Name"] || "TBD",
-        a: f["Away Team Name"] || "TBD",
-        hCrest: f["Home Crest"] || "",
-        aCrest: f["Away Crest"] || "",
+        id: f.id ?? i,
+        lg: f.lg,
+        h: f.h || "TBD",
+        a: f.a || "TBD",
+        hCrest: f.hCrest || "",
+        aCrest: f.aCrest || "",
         day: kickoff ? WEEKDAY[kickoff.getDay()] : "",
         date: kickoff ? `${kickoff.getDate()} ${MONTH[kickoff.getMonth()]}` : "",
         time: kickoff
           ? kickoff.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })
           : "",
+        dayKey: kickoff ? kickoff.toDateString() : "",
+        dayLabel: kickoff
+          ? `${DAY_FULL[WEEKDAY[kickoff.getDay()]]} ${kickoff.getDate()} ${MONTH[kickoff.getMonth()]}`
+          : "",
         _kickoffMs: kickoff ? kickoff.getTime() : 0,
-        tags,
-        highlightOverride: !!f["Highlight Override"],
-        sig: {
-          r: f["Rivalry Final"] ?? 40,
-          s: f["Stakes Score"] ?? 0,
-          f: f["Match Form Score"] ?? 0,
-          st: f["Star Power Score"] ?? 0,
-        },
+        tags: Array.isArray(f.tags) ? f.tags : [],
+        highlightOverride: !!f.highlightOverride,
+        sig: f.sig || { r: 40, s: 0, f: 0, st: 0 },
       };
     })
     .filter((fx) => fx.lg && leagues[fx.lg])
@@ -98,8 +97,6 @@ function ErrorState({ message, onRetry }) {
 
 // ---------------------------------------------------------------------------
 
-const DAY_ORDER = ["Fri", "Sat", "Sun", "Mon"];
-const DAY_FULL = { Fri: "Friday", Sat: "Saturday", Sun: "Sunday", Mon: "Monday" };
 
 const SIGNAL_META = [
   { key: "r",  label: "Rivalry" },
@@ -169,11 +166,20 @@ export default function MatchweekBoard() {
     if (group === "score") {
       return [{ key: "all", label: null, items: [...filtered].sort((a, b) => b.score - a.score) }];
     }
-    return DAY_ORDER.map((d) => ({
-      key: d,
-      label: DAY_FULL[d],
-      items: filtered.filter((fx) => fx.day === d).sort((a, b) => b.score - a.score),
-    })).filter((g) => g.items.length);
+    // Group by whatever dates actually appear, in chronological order. A fixed
+    // Fri-Mon list would silently drop midweek games (Champions League, Serie A
+    // Monday nights, Liga MX).
+    const byDay = new Map();
+    for (const fx of [...filtered].sort((a, b) => a._kickoffMs - b._kickoffMs)) {
+      if (!byDay.has(fx.dayKey)) {
+        byDay.set(fx.dayKey, { key: fx.dayKey, label: fx.dayLabel, items: [] });
+      }
+      byDay.get(fx.dayKey).items.push(fx);
+    }
+    return [...byDay.values()].map((g) => ({
+      ...g,
+      items: g.items.sort((a, b) => b.score - a.score),
+    }));
   }, [filtered, group]);
 
   // Hooks above this line always run, in the same order, every render.
@@ -285,8 +291,8 @@ export default function MatchweekBoard() {
       <footer className="mw-foot">
         <p>
           Score = a weighted blend of four signals per game: rivalry, table stakes, star power and
-          recent form. Fixtures and standings come from football-data.org, payroll-based star power
-          ratings live in Airtable, and this whole board refreshes automatically every Tuesday.
+          recent form. Fixtures and standings come from football-data.org and ESPN, and this whole
+          board rebuilds itself automatically every Tuesday.
         </p>
       </footer>
     </div>
@@ -510,3 +516,4 @@ const CSS = `
 }
 @media (prefers-reduced-motion:reduce){ .hot{transition:none;} }
 `;
+
