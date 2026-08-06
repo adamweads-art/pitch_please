@@ -1,7 +1,7 @@
 {
   "_readme": "Pitch, Please configuration. Edit this file to change what the board shows. The weekly GitHub Action reads it, fetches data, scores every fixture and writes matchweek.json. No database, no Make, no quotas.",
 
-  "windowDays": 10,
+  "windowDays": 21,
   "_windowDays": "How many days ahead to look for fixtures. The published feed anchors on the earliest upcoming match and shows ~9 days from there, so this only needs to be wide enough to find that anchor.",
 
   "weights": { "r": 35, "s": 30, "st": 20, "f": 15 },
