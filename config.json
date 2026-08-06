@@ -1,15 +1,19 @@
 {
   "_readme": "Pitch, Please configuration. Edit this file to change what the board shows. The weekly GitHub Action reads it, fetches data, scores every fixture and writes matchweek.json. No database, no Make, no quotas.",
-
   "windowDays": 21,
+  "_publishMode": "How much of the fetched window actually appears on the board. \"weekend\" shows only the next Fri-Mon block of football, which is usually what you want. \"days\" anchors on the earliest fixture and takes publishDays forward, including midweek games. Switch to \"days\" if you turn on the Champions League, which plays Tue/Wed.",
+  "publishMode": "weekend",
+  "publishDays": 9,
   "_windowDays": "How many days ahead to look for fixtures. The published feed anchors on the earliest upcoming match and shows ~9 days from there, so this only needs to be wide enough to find that anchor.",
-
-  "weights": { "r": 35, "s": 30, "st": 20, "f": 15 },
+  "weights": {
+    "r": 35,
+    "s": 30,
+    "st": 20,
+    "f": 15
+  },
   "_weights": "Watchability blend. r=rivalry, s=table stakes, st=star power, f=recent form. Must total 100.",
-
   "defaultRivalry": 40,
   "_defaultRivalry": "Score for a fixture with no derby history.",
-
   "leagues": [
     {
       "code": "PL",
@@ -145,46 +149,387 @@
       "active": false
     }
   ],
-
   "_rivalries": "Matched on the exact team names each API returns, in both home/away orders. If a derby isn't scoring, check the name in matchweek.json first.",
   "rivalries": [
-    { "teams": ["Real Madrid", "Barça"], "score": 100, "tag": "El Clásico" },
-    { "teams": ["Inter", "Milan"], "score": 100, "tag": "Derby della Madonnina" },
-    { "teams": ["América", "Guadalajara"], "score": 100, "tag": "Clásico Nacional" },
-    { "teams": ["Roma", "Lazio"], "score": 99, "tag": "Derby della Capitale" },
-    { "teams": ["Arsenal", "Tottenham"], "score": 98, "tag": "North London Derby" },
-    { "teams": ["Monterrey", "Tigres UANL"], "score": 97, "tag": "Clásico Regiomontano" },
-    { "teams": ["Sevilla FC", "Real Betis"], "score": 96, "tag": "Seville Derby" },
-    { "teams": ["M'gladbach", "1. FC Köln"], "score": 92, "tag": "Rheinderby" },
-    { "teams": ["Bayern", "Dortmund"], "score": 90, "tag": "Der Klassiker" },
-    { "teams": ["Cruz Azul", "Pumas UNAM"], "score": 88, "tag": "Clásico Capitalino" },
-    { "teams": ["Liverpool", "Man United"], "score": 88, "tag": "Northwest Derby" },
-    { "teams": ["América", "Cruz Azul"], "score": 86, "tag": "Clásico Joven" },
-    { "teams": ["Atlas", "Guadalajara"], "score": 85, "tag": "Clásico Tapatío" },
-    { "teams": ["Everton", "Liverpool"], "score": 85, "tag": "Merseyside Derby" },
-    { "teams": ["Atleti", "Real Madrid"], "score": 85, "tag": "Madrid Derby" },
-    { "teams": ["Juventus", "Inter"], "score": 82, "tag": "Derby d'Italia" },
-    { "teams": ["Man City", "Man United"], "score": 80, "tag": "Manchester Derby" },
-    { "teams": ["Ajax", "Feyenoord"], "score": 100, "tag": "De Klassieker" },
-    { "teams": ["Ajax", "PSV"], "score": 82, "tag": "Topper" },
-    { "teams": ["Feyenoord", "Sparta Rotterdam"], "score": 78, "tag": "Rotterdam Derby" },
-    { "teams": ["Paris Saint-Germain", "Marseille"], "score": 96, "tag": "Le Classique" },
-    { "teams": ["Lyon", "Saint-Étienne"], "score": 92, "tag": "Derby Rhône-Alpes" },
-    { "teams": ["Nice", "Marseille"], "score": 80, "tag": "Côte d'Azur Derby" }
+    {
+      "teams": [
+        "Real Madrid",
+        "Barça"
+      ],
+      "score": 100,
+      "tag": "El Clásico"
+    },
+    {
+      "teams": [
+        "Inter",
+        "Milan"
+      ],
+      "score": 100,
+      "tag": "Derby della Madonnina"
+    },
+    {
+      "teams": [
+        "América",
+        "Guadalajara"
+      ],
+      "score": 100,
+      "tag": "Clásico Nacional"
+    },
+    {
+      "teams": [
+        "Ajax",
+        "Feyenoord"
+      ],
+      "score": 100,
+      "tag": "De Klassieker"
+    },
+    {
+      "teams": [
+        "Roma",
+        "Lazio"
+      ],
+      "score": 99,
+      "tag": "Derby della Capitale"
+    },
+    {
+      "teams": [
+        "Arsenal",
+        "Tottenham"
+      ],
+      "score": 98,
+      "tag": "North London Derby"
+    },
+    {
+      "teams": [
+        "Monterrey",
+        "Tigres UANL"
+      ],
+      "score": 97,
+      "tag": "Clásico Regiomontano"
+    },
+    {
+      "teams": [
+        "Sevilla FC",
+        "Real Betis"
+      ],
+      "score": 96,
+      "tag": "Seville Derby"
+    },
+    {
+      "teams": [
+        "Paris Saint-Germain",
+        "Marseille"
+      ],
+      "score": 96,
+      "tag": "Le Classique"
+    },
+    {
+      "teams": [
+        "Portsmouth",
+        "Southampton"
+      ],
+      "score": 95,
+      "tag": "South Coast Derby"
+    },
+    {
+      "teams": [
+        "M'gladbach",
+        "1. FC Köln"
+      ],
+      "score": 92,
+      "tag": "Rheinderby"
+    },
+    {
+      "teams": [
+        "Lyon",
+        "Saint-Étienne"
+      ],
+      "score": 92,
+      "tag": "Derby Rhône-Alpes"
+    },
+    {
+      "teams": [
+        "Blackburn",
+        "Burnley"
+      ],
+      "score": 92,
+      "tag": "East Lancashire Derby"
+    },
+    {
+      "teams": [
+        "Bayern",
+        "Dortmund"
+      ],
+      "score": 90,
+      "tag": "Der Klassiker"
+    },
+    {
+      "teams": [
+        "Cruz Azul",
+        "Pumas UNAM"
+      ],
+      "score": 88,
+      "tag": "Clásico Capitalino"
+    },
+    {
+      "teams": [
+        "Liverpool",
+        "Man United"
+      ],
+      "score": 88,
+      "tag": "Northwest Derby"
+    },
+    {
+      "teams": [
+        "Birmingham",
+        "West Brom"
+      ],
+      "score": 88,
+      "tag": "West Midlands Derby"
+    },
+    {
+      "teams": [
+        "América",
+        "Cruz Azul"
+      ],
+      "score": 86,
+      "tag": "Clásico Joven"
+    },
+    {
+      "teams": [
+        "Atlas",
+        "Guadalajara"
+      ],
+      "score": 85,
+      "tag": "Clásico Tapatío"
+    },
+    {
+      "teams": [
+        "Everton",
+        "Liverpool"
+      ],
+      "score": 85,
+      "tag": "Merseyside Derby"
+    },
+    {
+      "teams": [
+        "Atleti",
+        "Real Madrid"
+      ],
+      "score": 85,
+      "tag": "Madrid Derby"
+    },
+    {
+      "teams": [
+        "Juventus",
+        "Inter"
+      ],
+      "score": 82,
+      "tag": "Derby d'Italia"
+    },
+    {
+      "teams": [
+        "Ajax",
+        "PSV"
+      ],
+      "score": 82,
+      "tag": "Topper"
+    },
+    {
+      "teams": [
+        "Man City",
+        "Man United"
+      ],
+      "score": 80,
+      "tag": "Manchester Derby"
+    },
+    {
+      "teams": [
+        "Nice",
+        "Marseille"
+      ],
+      "score": 80,
+      "tag": "Côte d'Azur Derby"
+    },
+    {
+      "teams": [
+        "Feyenoord",
+        "PSV"
+      ],
+      "score": 80,
+      "tag": "Topper"
+    },
+    {
+      "teams": [
+        "Millwall",
+        "Charlton"
+      ],
+      "score": 80,
+      "tag": "South London Derby"
+    },
+    {
+      "teams": [
+        "Feyenoord",
+        "Sparta"
+      ],
+      "score": 78,
+      "tag": "Rotterdam Derby"
+    }
   ],
-
   "_payrollRanks": "1 = highest wage bill in that league. Only the order matters. Blank/missing teams fall back to the league floor. Refresh once a season from Capology or FBref wages.",
   "payrollRanks": {
-    "PL": ["Man City", "Man United", "Arsenal", "Chelsea", "Liverpool", "Aston Villa", "Tottenham", "Newcastle", "West Ham", "Brighton Hove", "Crystal Palace", "Nottingham", "Fulham", "Bournemouth", "Wolverhampton", "Everton", "Brentford", "Leeds United", "Burnley", "Sunderland"],
-    "PD": ["Real Madrid", "Barça", "Atleti", "Athletic", "Sevilla FC", "Real Betis", "Real Sociedad", "Villarreal", "Valencia", "Celta", "Girona", "Mallorca", "Getafe", "Rayo Vallecano", "Osasuna", "Alavés", "Espanyol", "Levante", "Elche", "Real Oviedo"],
-    "SA": ["Inter", "Juventus", "Napoli", "Roma", "Milan", "Lazio", "Fiorentina", "Atalanta", "Como 1907", "Torino", "Bologna", "Sassuolo", "Udinese", "Cagliari", "Genoa", "Parma", "Lecce", "AC Pisa", "Verona", "Cremonese"],
-    "BL1": ["Bayern", "Dortmund", "RB Leipzig", "Leverkusen", "Hoffenheim", "Frankfurt", "Wolfsburg", "Stuttgart", "M'gladbach", "Mainz", "Freiburg", "Bremen", "Augsburg", "Union Berlin", "HSV", "1. FC Köln", "Heidenheim", "St. Pauli"],
-    "MX": ["Monterrey", "Tigres UANL", "América", "Cruz Azul", "Guadalajara", "Toluca", "Pumas UNAM", "León", "Pachuca", "Santos", "Atlas", "Tijuana", "Puebla", "Querétaro", "Atlético de San Luis", "Necaxa", "FC Juarez", "Atlante"],
-    "DED": [],
+    "PL": [
+      "Man City",
+      "Man United",
+      "Arsenal",
+      "Chelsea",
+      "Liverpool",
+      "Aston Villa",
+      "Tottenham",
+      "Newcastle",
+      "West Ham",
+      "Brighton Hove",
+      "Crystal Palace",
+      "Nottingham",
+      "Fulham",
+      "Bournemouth",
+      "Wolverhampton",
+      "Everton",
+      "Brentford",
+      "Leeds United",
+      "Burnley",
+      "Sunderland"
+    ],
+    "PD": [
+      "Real Madrid",
+      "Barça",
+      "Atleti",
+      "Athletic",
+      "Sevilla FC",
+      "Real Betis",
+      "Real Sociedad",
+      "Villarreal",
+      "Valencia",
+      "Celta",
+      "Girona",
+      "Mallorca",
+      "Getafe",
+      "Rayo Vallecano",
+      "Osasuna",
+      "Alavés",
+      "Espanyol",
+      "Levante",
+      "Elche",
+      "Real Oviedo"
+    ],
+    "SA": [
+      "Inter",
+      "Juventus",
+      "Napoli",
+      "Roma",
+      "Milan",
+      "Lazio",
+      "Fiorentina",
+      "Atalanta",
+      "Como 1907",
+      "Torino",
+      "Bologna",
+      "Sassuolo",
+      "Udinese",
+      "Cagliari",
+      "Genoa",
+      "Parma",
+      "Lecce",
+      "AC Pisa",
+      "Verona",
+      "Cremonese"
+    ],
+    "BL1": [
+      "Bayern",
+      "Dortmund",
+      "RB Leipzig",
+      "Leverkusen",
+      "Hoffenheim",
+      "Frankfurt",
+      "Wolfsburg",
+      "Stuttgart",
+      "M'gladbach",
+      "Mainz",
+      "Freiburg",
+      "Bremen",
+      "Augsburg",
+      "Union Berlin",
+      "HSV",
+      "1. FC Köln",
+      "Heidenheim",
+      "St. Pauli"
+    ],
+    "MX": [
+      "Monterrey",
+      "Tigres UANL",
+      "América",
+      "Cruz Azul",
+      "Guadalajara",
+      "Toluca",
+      "Pumas UNAM",
+      "León",
+      "Pachuca",
+      "Santos",
+      "Atlas",
+      "Tijuana",
+      "Puebla",
+      "Querétaro",
+      "Atlético de San Luis",
+      "Necaxa",
+      "FC Juarez",
+      "Atlante"
+    ],
+    "DED": [
+      "PSV",
+      "Ajax",
+      "Feyenoord",
+      "Utrecht",
+      "AZ",
+      "Twente",
+      "NEC",
+      "Go Ahead",
+      "Sparta",
+      "Heerenveen",
+      "Groningen",
+      "Zwolle",
+      "Sittard",
+      "Excelsior",
+      "Willem II",
+      "Den Haag",
+      "Cambuur",
+      "Telstar"
+    ],
     "FL1": [],
-    "ELC": []
+    "ELC": [
+      "West Ham",
+      "Wolverhampton",
+      "Southampton",
+      "Burnley",
+      "Sheffield Utd",
+      "Middlesbrough",
+      "Norwich",
+      "Watford",
+      "Stoke",
+      "Derby County",
+      "Bristol City",
+      "Swansea",
+      "Millwall",
+      "QPR",
+      "Preston NE",
+      "Blackburn",
+      "Portsmouth",
+      "Charlton",
+      "Birmingham",
+      "Bolton",
+      "Lincoln City"
+    ]
   },
-
   "_starPowerOverrides": "Optional manual override, 0-100, for a genuine global icon at an otherwise unremarkable club. Keyed by exact team name.",
   "starPowerOverrides": {}
 }
+
