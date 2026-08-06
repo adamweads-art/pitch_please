@@ -97,7 +97,7 @@
       "standingsSeason": 2025,
       "fixtureSeason": 2026,
       "pullStandings": true,
-      "active": false
+      "active": true
     },
     {
       "code": "FL1",
@@ -112,7 +112,7 @@
       "standingsSeason": 2025,
       "fixtureSeason": 2026,
       "pullStandings": true,
-      "active": false
+      "active": true
     },
     {
       "code": "ELC",
@@ -127,7 +127,7 @@
       "standingsSeason": 2025,
       "fixtureSeason": 2026,
       "pullStandings": true,
-      "active": false
+      "active": true
     },
     {
       "code": "CL",
