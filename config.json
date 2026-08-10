@@ -2,7 +2,7 @@
   "_readme": "Pitch, Please configuration. Edit this file to change what the board shows. The weekly GitHub Action reads it, fetches data, scores every fixture and writes matchweek.json. No database, no Make, no quotas.",
   "windowDays": 21,
   "_publishMode": "How much of the fetched window actually appears on the board. \"weekend\" shows only the next Fri-Mon block of football, which is usually what you want. \"days\" anchors on the earliest fixture and takes publishDays forward, including midweek games. Switch to \"days\" if you turn on the Champions League, which plays Tue/Wed.",
-  "publishMode": "weekend",
+  "publishMode": "days",
   "publishDays": 9,
   "_windowDays": "How many days ahead to look for fixtures. The published feed anchors on the earliest upcoming match and shows ~9 days from there, so this only needs to be wide enough to find that anchor.",
   "weights": {
@@ -145,6 +145,84 @@
       "starFloor": 55,
       "standingsSeason": 2025,
       "fixtureSeason": 2026,
+      "pullStandings": false,
+      "active": false
+    },
+    {
+      "code": "ITACUP",
+      "name": "Coppa Italia",
+      "short": "Coppa Italia",
+      "chip": "#C9A227",
+      "source": "espn",
+      "espnSlug": "ita.coppa_italia",
+      "teamsInLeague": 20,
+      "starCeiling": 95,
+      "starFloor": 35,
+      "pullStandings": false,
+      "active": false
+    },
+    {
+      "code": "FACUP",
+      "name": "FA Cup",
+      "short": "FA Cup",
+      "chip": "#D46A6A",
+      "source": "espn",
+      "espnSlug": "eng.fa",
+      "teamsInLeague": 20,
+      "starCeiling": 95,
+      "starFloor": 35,
+      "pullStandings": false,
+      "active": false
+    },
+    {
+      "code": "EFLCUP",
+      "name": "Carabao Cup",
+      "short": "Carabao Cup",
+      "chip": "#8FA6C9",
+      "source": "espn",
+      "espnSlug": "eng.league_cup",
+      "teamsInLeague": 20,
+      "starCeiling": 95,
+      "starFloor": 35,
+      "pullStandings": false,
+      "active": false
+    },
+    {
+      "code": "COPADELREY",
+      "name": "Copa del Rey",
+      "short": "Copa del Rey",
+      "chip": "#E08D5A",
+      "source": "espn",
+      "espnSlug": "esp.copa_del_rey",
+      "teamsInLeague": 20,
+      "starCeiling": 95,
+      "starFloor": 35,
+      "pullStandings": false,
+      "active": false
+    },
+    {
+      "code": "DFBPOKAL",
+      "name": "DFB-Pokal",
+      "short": "DFB-Pokal",
+      "chip": "#B98BC9",
+      "source": "espn",
+      "espnSlug": "ger.dfb_pokal",
+      "teamsInLeague": 20,
+      "starCeiling": 95,
+      "starFloor": 35,
+      "pullStandings": false,
+      "active": false
+    },
+    {
+      "code": "KNVB",
+      "name": "KNVB Beker",
+      "short": "KNVB Beker",
+      "chip": "#7FC4A6",
+      "source": "espn",
+      "espnSlug": "ned.cup",
+      "teamsInLeague": 20,
+      "starCeiling": 95,
+      "starFloor": 35,
       "pullStandings": false,
       "active": false
     }
@@ -527,9 +605,15 @@
       "Birmingham",
       "Bolton",
       "Lincoln City"
-    ]
+    ],
+    "ITACUP": [],
+    "FACUP": [],
+    "EFLCUP": [],
+    "COPADELREY": [],
+    "DFBPOKAL": [],
+    "KNVB": []
   },
   "_starPowerOverrides": "Optional manual override, 0-100, for a genuine global icon at an otherwise unremarkable club. Keyed by exact team name.",
-  "starPowerOverrides": {}
+  "starPowerOverrides": {},
+  "_cups": "Domestic cups run through ESPN and have no league table, so Stakes is neutral for every tie and scoring leans on rivalry and star power. Their payrollRanks lists are empty: activate a cup, run once, read the team names out of matchweek.json, then fill the list using those exact names. Cups also play midweek, so keep publishMode on 'days'."
 }
-
