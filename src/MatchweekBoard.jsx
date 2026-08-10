@@ -215,10 +215,14 @@ export default function MatchweekBoard() {
           </button>
           {leagueKeys.map((id) => {
             const l = data.leagues[id];
+            const count = scored.filter((fx) => fx.lg === id).length;
+            const empty = count === 0;
             return (
-              <button key={id} onClick={() => toggle(id)}
-                className={"chip" + (active[id] ? " on" : "")}
-                style={active[id] ? { "--c": l.chip } : {}}>
+              <button key={id} onClick={() => !empty && toggle(id)}
+                disabled={empty}
+                title={empty ? `${l.name}: no games this weekend` : l.name}
+                className={"chip" + (active[id] && !empty ? " on" : "") + (empty ? " chip-empty" : "")}
+                style={active[id] && !empty ? { "--c": l.chip } : {}}>
                 <span className="dot" style={{ background: l.chip }} />
                 {l.short}
               </button>
@@ -488,6 +492,8 @@ const CSS = `
 .meter-fill{width:100%;background:linear-gradient(180deg,var(--amber),rgba(242,169,74,.45));border-radius:3px;}
 .meter-lab{font-size:9px;color:var(--muted);font-family:'Spline Sans Mono';}
 
+.chip-empty{opacity:.32;cursor:default;border-style:dashed;}
+.chip-empty:hover{color:var(--muted);border-color:var(--line2);}
 .crest{width:20px;height:20px;object-fit:contain;flex:none;vertical-align:middle;}
 .crest-blank{display:inline-block;border-radius:50%;background:var(--line2);}
 .team-line{display:inline-flex;align-items:center;gap:8px;}
@@ -516,4 +522,3 @@ const CSS = `
 }
 @media (prefers-reduced-motion:reduce){ .hot{transition:none;} }
 `;
-
