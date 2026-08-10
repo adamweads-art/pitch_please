@@ -209,7 +209,7 @@ async function loadEspn(league, windowDays) {
     const home = comps.find((c) => c.homeAway === "home") || comps[0];
     const away = comps.find((c) => c.homeAway === "away") || comps[1];
     return {
-      id: `mx${ev.id}`,
+      id: `${league.code.toLowerCase()}${ev.id}`,
       utcDate: ev.date,
       homeName: home?.team?.displayName || "TBD",
       awayName: away?.team?.displayName || "TBD",
@@ -267,7 +267,10 @@ function selectPublished(fixtures, config) {
     const anchor = new Date(fixtures[0].kickoff).getTime();
     const cutoff = anchor + (config.publishDays ?? 9) * 864e5;
     const published = fixtures.filter((f) => new Date(f.kickoff).getTime() <= cutoff);
-    return { published, rangeLabel: "" };
+    const label = published.length
+      ? formatRange(new Date(published[0].kickoff), new Date(published.at(-1).kickoff))
+      : "";
+    return { published, rangeLabel: label };
   }
 
   // Weekend mode. Walk forward through fixtures until we find one that sits in
@@ -396,7 +399,10 @@ async function main() {
     generatedAt: new Date().toISOString().slice(0, 10),
     weights: config.weights,
     range: rangeLabel,
-    leagues: leaguesOut.filter((l) => published.some((f) => f.lg === l.code)),
+    // Every active league ships, including ones with no games this weekend, so
+    // the board always shows the full set of filter chips. The dashboard greys
+    // out the empty ones rather than hiding them.
+    leagues: leaguesOut,
     fixtures: published,
   };
 
