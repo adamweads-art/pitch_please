@@ -1,9 +1,9 @@
 {
   "_readme": "Pitch, Please configuration. Edit this file to change what the board shows. The weekly GitHub Action reads it, fetches data, scores every fixture and writes matchweek.json. No database, no Make, no quotas.",
   "windowDays": 21,
-  "_publishMode": "How much of the fetched window actually appears on the board. \"weekend\" shows only the next Fri-Mon block of football, which is usually what you want. \"days\" anchors on the earliest fixture and takes publishDays forward, including midweek games. Switch to \"days\" if you turn on the Champions League, which plays Tue/Wed.",
-  "publishMode": "days",
-  "publishDays": 9,
+  "_publishMode": "How much of the fetched window reaches the board. \"week\" publishes everything between this refresh and the next one, which matches the Monday-night cadence and includes midweek games. \"weekend\" shows only the next Fri-Mon block. \"days\" anchors on the earliest fixture and takes publishDays forward.",
+  "publishMode": "week",
+  "publishDays": 7,
   "_windowDays": "How many days ahead to look for fixtures. The published feed anchors on the earliest upcoming match and shows ~9 days from there, so this only needs to be wide enough to find that anchor.",
   "weights": {
     "r": 35,
