@@ -204,7 +204,7 @@ export default function MatchweekBoard() {
         </div>
         <p className="mw-lede">
           Every game across multiple leagues, ranked by how much it deserves your weekend. The dials
-          are there because you'll disagree. Refreshed every Tuesday.
+          are there because you'll disagree. Refreshed every Monday night.
         </p>
       </header>
 
@@ -283,7 +283,7 @@ export default function MatchweekBoard() {
         ))}
         {filtered.length === 0 && data.fixtures.length === 0 && (
           <div className="empty">
-            Nothing on the calendar right now — the feed updates every Tuesday, and fixtures will
+            Nothing on the calendar right now — the feed updates every Monday night, and fixtures will
             appear here as soon as each league's schedule is announced.
           </div>
         )}
@@ -296,7 +296,7 @@ export default function MatchweekBoard() {
         <p>
           Score = a weighted blend of four signals per game: rivalry, table stakes, star power and
           recent form. Fixtures and standings come from football-data.org and ESPN, and this whole
-          board rebuilds itself automatically every Tuesday.
+          board rebuilds itself automatically every Monday night.
         </p>
       </footer>
     </div>
