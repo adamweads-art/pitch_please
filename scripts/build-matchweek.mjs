@@ -227,8 +227,10 @@ async function loadEspn(league, windowDays) {
 // still discovered. What gets *published* is narrower, and controlled by
 // config.publishMode:
 //
-//   "weekend" - just the next Fri-Mon block of football (the default). Midweek
-//               fixtures are excluded, which is the point.
+//   "week"    - everything between this refresh and the next one. Matches the
+//               weekly cadence, includes midweek games, and is the default.
+//   "weekend" - just the next Fri-Mon block of football. Midweek fixtures are
+//               excluded, which is the point.
 //   "days"    - anchor on the earliest fixture and take config.publishDays
 //               forward from there. Use this if you want midweek games too.
 // ---------------------------------------------------------------------------
@@ -262,6 +264,42 @@ function selectPublished(fixtures, config) {
   if (!fixtures.length) return { published: [], rangeLabel: "" };
 
   const mode = config.publishMode || "weekend";
+
+  if (mode === "week") {
+    // Publish exactly the span between this refresh and the next one, so the
+    // board covers "everything before I see this again". The label is snapped
+    // to Mondays because that's how the week reads to a human, while the filter
+    // runs from now with a little overlap so nothing falls through the gap
+    // between the label's Monday and the next run.
+    const now = Date.now();
+    const span = (config.publishDays ?? 7) * 864e5;
+    const end = now + span + 12 * 36e5; // half a day of overlap
+    const inWeek = fixtures.filter((f) => {
+      const t = new Date(f.kickoff).getTime();
+      return t >= now && t <= end;
+    });
+
+    if (inWeek.length) {
+      const d = new Date(now);
+      const back = (d.getUTCDay() + 6) % 7; // days since Monday
+      const weekStart = new Date(Date.UTC(
+        d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - back, 0, 0, 0, 0
+      ));
+      const weekEnd = new Date(weekStart.getTime() + 7 * 864e5);
+      return { published: inWeek, rangeLabel: formatRange(weekStart, weekEnd) };
+    }
+
+    // Nothing at all this week (preseason, international break). Rather than
+    // publish an empty board, fall through to the earliest fixtures we do have.
+    const anchor = new Date(fixtures[0].kickoff).getTime();
+    const ahead = fixtures.filter((f) => new Date(f.kickoff).getTime() <= anchor + span);
+    return {
+      published: ahead,
+      rangeLabel: ahead.length
+        ? formatRange(new Date(ahead[0].kickoff), new Date(ahead.at(-1).kickoff))
+        : "",
+    };
+  }
 
   if (mode === "days") {
     const anchor = new Date(fixtures[0].kickoff).getTime();
