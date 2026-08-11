@@ -99,10 +99,14 @@ function ErrorState({ message, onRetry }) {
 
 
 const SIGNAL_META = [
-  { key: "r",  label: "Rivalry" },
-  { key: "s",  label: "Stakes" },
-  { key: "st", label: "Star power" },
-  { key: "f",  label: "Form" },
+  { key: "r",  label: "Rivalry",
+    blurb: "Does this fixture carry history? Derbies and classics score high. Two clubs with nothing between them sit at a baseline." },
+  { key: "s",  label: "Stakes",
+    blurb: "How much is riding on it, from where both sides sit in the table. Two teams near the top, or two scrapping to survive, beat a mismatch." },
+  { key: "st", label: "Star power",
+    blurb: "How much pull the clubs have, measured by wage bill rather than current form. A fallen giant still draws a crowd." },
+  { key: "f",  label: "Form",
+    blurb: "How well both teams are playing right now, from their last five results." },
 ];
 
 function scoreOf(fx, w) {
@@ -256,6 +260,7 @@ export default function MatchweekBoard() {
                 </div>
                 <input type="range" min="0" max="100" value={w[m.key]}
                   onChange={(e) => setW((s) => ({ ...s, [m.key]: Number(e.target.value) }))} />
+                <p className="slider-blurb">{m.blurb}</p>
               </label>
             ))}
           </div>
@@ -430,7 +435,8 @@ const CSS = `
 .reset{background:none;border:none;color:var(--muted);text-decoration:underline;cursor:pointer;
   font-family:'Barlow';font-size:12px;letter-spacing:0;text-transform:none;}
 .reset:hover{color:var(--chalk);}
-.sliders{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:18px 26px;}
+.sliders{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px 28px;}
+.slider-blurb{margin:8px 0 0;font-size:12.5px;line-height:1.5;color:var(--muted);}
 .slider-top{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);
   margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em;font-family:'Barlow Condensed';font-weight:600;}
 .slider-val{font-family:'Spline Sans Mono';color:var(--amber);}
