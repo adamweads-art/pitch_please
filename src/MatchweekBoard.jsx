@@ -126,7 +126,7 @@ export default function MatchweekBoard() {
   const [error, setError] = useState(null);
   const [reloadTick, setReloadTick] = useState(0);
   const [active, setActive] = useState({});
-  const [group, setGroup] = useState("score"); // "score" | "day"
+  const [group, setGroup] = useState("time"); // "time" | "score" | "day"
   const [tuning, setTuning] = useState(false);
   const [w, setW] = useState({ r: 35, s: 30, st: 20, f: 15 });
 
@@ -167,6 +167,9 @@ export default function MatchweekBoard() {
     [filtered]
   );
   const board = useMemo(() => {
+    if (group === "time") {
+      return [{ key: "all", label: null, items: [...filtered].sort((a, b) => a._kickoffMs - b._kickoffMs) }];
+    }
     if (group === "score") {
       return [{ key: "all", label: null, items: [...filtered].sort((a, b) => b.score - a.score) }];
     }
@@ -182,7 +185,7 @@ export default function MatchweekBoard() {
     }
     return [...byDay.values()].map((g) => ({
       ...g,
-      items: g.items.sort((a, b) => b.score - a.score),
+      items: g.items.sort((a, b) => a._kickoffMs - b._kickoffMs),
     }));
   }, [filtered, group]);
 
@@ -236,6 +239,7 @@ export default function MatchweekBoard() {
 
         <div className="mw-right">
           <div className="seg">
+            <button className={group === "time" ? "on" : ""} onClick={() => setGroup("time")}>By time</button>
             <button className={group === "score" ? "on" : ""} onClick={() => setGroup("score")}>Ranked</button>
             <button className={group === "day" ? "on" : ""} onClick={() => setGroup("day")}>By day</button>
           </div>
@@ -308,6 +312,129 @@ export default function MatchweekBoard() {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Adding a fixture to a calendar
+//
+// No connector, no OAuth, no backend. Google takes a pre-filled URL; everyone
+// else (Apple, Outlook) takes a downloadable .ics file we build in the browser.
+// ---------------------------------------------------------------------------
+
+// Football runs ~105 minutes with half-time, so block two hours.
+const MATCH_MINUTES = 120;
+
+function calendarTitle(fx, league) {
+  return `${fx.h} v ${fx.a} (${league.short}, ${fx.score})`;
+}
+
+function calendarDetails(fx, league) {
+  const bits = [
+    `${league.name}`,
+    fx.tags.length ? fx.tags.join(", ") : null,
+    `Watchability ${fx.score}/100`,
+    `— rivalry ${fx.sig.r}, stakes ${fx.sig.s}, star power ${fx.sig.st}, form ${fx.sig.f}`,
+    ``,
+    `via Pitch, Please`,
+  ].filter((b) => b !== null);
+  return bits.join("\n");
+}
+
+/** YYYYMMDDTHHMMSSZ, the format both Google and iCalendar want. */
+function stampUTC(d) {
+  return d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+}
+
+function googleCalendarUrl(fx, league) {
+  const start = new Date(fx._kickoffMs);
+  const end = new Date(fx._kickoffMs + MATCH_MINUTES * 60000);
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: calendarTitle(fx, league),
+    dates: `${stampUTC(start)}/${stampUTC(end)}`,
+    details: calendarDetails(fx, league),
+  });
+  return `https://calendar.google.com/calendar/render?${params}`;
+}
+
+function downloadIcs(fx, league) {
+  const start = new Date(fx._kickoffMs);
+  const end = new Date(fx._kickoffMs + MATCH_MINUTES * 60000);
+  // iCalendar wants CRLF line breaks, and commas/semicolons escaped in text.
+  const esc = (s) => String(s).replace(/([,;\\])/g, "\\$1").replace(/\n/g, "\\n");
+  const lines = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Pitch Please//EN",
+    "CALSCALE:GREGORIAN",
+    "BEGIN:VEVENT",
+    `UID:pitchplease-${fx.id}@pitch-please.org`,
+    `DTSTAMP:${stampUTC(new Date())}`,
+    `DTSTART:${stampUTC(start)}`,
+    `DTEND:${stampUTC(end)}`,
+    `SUMMARY:${esc(calendarTitle(fx, league))}`,
+    `DESCRIPTION:${esc(calendarDetails(fx, league))}`,
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ];
+  const blob = new Blob([lines.join("\r\n")], { type: "text/calendar;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${fx.h}-v-${fx.a}`.replace(/[^a-z0-9]+/gi, "-").toLowerCase() + ".ics";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/**
+ * A small "add to calendar" control. Opens a two-option menu rather than
+ * guessing which calendar someone uses.
+ */
+function AddToCalendar({ fx, league, compact }) {
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    // Let the current click finish before arming the outside-click listener.
+    const t = setTimeout(() => document.addEventListener("click", close), 0);
+    return () => { clearTimeout(t); document.removeEventListener("click", close); };
+  }, [open]);
+
+  return (
+    <span className={"cal" + (compact ? " cal-compact" : "")}>
+      <button
+        className="cal-btn"
+        aria-label={`Add ${fx.h} v ${fx.a} to your calendar`}
+        title="Add to calendar"
+        onClick={(e) => { e.stopPropagation(); setOpen((o) => !o); }}
+      >
+        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden focusable="false">
+          <rect x="3" y="5" width="18" height="16" rx="2" fill="none"
+            stroke="currentColor" strokeWidth="2" />
+          <path d="M3 10h18M8 3v4M16 3v4M12 14v4M10 16h4" fill="none"
+            stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      </button>
+      {open && (
+        <span className="cal-menu" onClick={(e) => e.stopPropagation()}>
+          <a
+            href={googleCalendarUrl(fx, league)}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => setOpen(false)}
+          >
+            Google Calendar
+          </a>
+          <button onClick={() => { downloadIcs(fx, league); setOpen(false); }}>
+            Apple / Outlook
+          </button>
+        </span>
+      )}
+    </span>
+  );
+}
+
 function Crest({ src }) {
   const [broken, setBroken] = useState(!src);
   if (broken) return <span className="crest crest-blank" aria-hidden />;
@@ -354,7 +481,10 @@ function HotCard({ fx, league, rank }) {
         {fx.tags.map((t) => <span key={t} className="tag">{t}</span>)}
       </div>
       <div className="hot-bottom">
-        <span className="kick">{fx.day} {fx.date} · {fx.time}</span>
+        <span className="kick">
+          {fx.day} {fx.date} · {fx.time}
+          <AddToCalendar fx={fx} league={league} />
+        </span>
         <span className="readout">{fx.score}</span>
       </div>
     </article>
@@ -372,7 +502,10 @@ function Row({ fx, league }) {
         </div>
         <div className="row-tags">{fx.tags.map((t) => <span key={t} className="tag sm">{t}</span>)}</div>
       </div>
-      <span className="row-kick">{fx.day} {fx.date}<br />{fx.time}</span>
+      <span className="row-kick">
+        {fx.day} {fx.date}<br />{fx.time}
+        <AddToCalendar fx={fx} league={league} compact />
+      </span>
       <Meter sig={fx.sig} />
       <span className="row-score readout">{fx.score}</span>
     </div>
@@ -500,6 +633,22 @@ const CSS = `
 
 .chip-empty{opacity:.32;cursor:default;border-style:dashed;}
 .chip-empty:hover{color:var(--muted);border-color:var(--line2);}
+.cal{position:relative;display:inline-flex;align-items:center;margin-left:8px;vertical-align:middle;}
+.cal-compact{margin-left:6px;}
+.cal-btn{background:none;border:none;padding:2px;cursor:pointer;color:var(--muted);
+  display:inline-flex;align-items:center;border-radius:5px;opacity:.55;transition:.15s ease;}
+.cal-btn:hover{color:var(--amber);opacity:1;background:rgba(242,169,74,.10);}
+.cal-btn:focus-visible{outline:2px solid var(--amber);outline-offset:2px;opacity:1;}
+.hot:hover .cal-btn,.row:hover .cal-btn{opacity:1;}
+.cal-menu{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);
+  z-index:20;display:flex;flex-direction:column;min-width:150px;
+  background:var(--panel);border:1px solid var(--line2);border-radius:10px;overflow:hidden;
+  box-shadow:0 8px 24px rgba(0,0,0,.45);}
+.cal-menu a,.cal-menu button{font-family:'Barlow',sans-serif;font-size:13px;text-align:left;
+  padding:9px 12px;background:none;border:none;color:var(--chalk);text-decoration:none;
+  cursor:pointer;white-space:nowrap;letter-spacing:0;text-transform:none;}
+.cal-menu a:hover,.cal-menu button:hover{background:rgba(242,169,74,.14);color:var(--amber);}
+.cal-menu a{border-bottom:1px solid var(--line);}
 .crest{width:20px;height:20px;object-fit:contain;flex:none;vertical-align:middle;}
 .crest-blank{display:inline-block;border-radius:50%;background:var(--line2);}
 .team-line{display:inline-flex;align-items:center;gap:8px;}
