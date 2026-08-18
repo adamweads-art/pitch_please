@@ -32,7 +32,7 @@ function adaptFeed(raw) {
     };
   }
 
-  const fixtures = (raw.fixtures || [])
+  const all = (raw.fixtures || [])
     .map((f, i) => {
       const kickoff = f.kickoff ? new Date(f.kickoff) : null;
       return {
@@ -59,6 +59,15 @@ function adaptFeed(raw) {
     })
     .filter((fx) => fx.lg && leagues[fx.lg])
     .sort((a, b) => a._kickoffMs - b._kickoffMs);
+
+  // The feed is rebuilt weekly, so between runs it still lists matches that
+  // have already been played. Drop anything that finished more than a couple
+  // of hours ago, so the board stays current day to day rather than only on
+  // Mondays. If that would empty the board (every game in the feed is done and
+  // the next rebuild hasn't happened yet), keep them rather than show nothing.
+  const doneBefore = Date.now() - 2 * 60 * 60 * 1000;
+  const upcoming = all.filter((fx) => fx._kickoffMs > doneBefore);
+  const fixtures = upcoming.length ? upcoming : all;
 
   return {
     label: raw.label || "Pitch, Please",
