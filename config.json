@@ -89,6 +89,19 @@
       "active": true
     },
     {
+      "code": "SPFL",
+      "name": "Scottish Premiership",
+      "short": "Scottish Prem",
+      "chip": "#99B740",
+      "source": "espn",
+      "espnSlug": "sco.1",
+      "teamsInLeague": 12,
+      "starCeiling": 82,
+      "starFloor": 30,
+      "pullStandings": true,
+      "active": true
+    },
+    {
       "code": "DED",
       "name": "Eredivisie",
       "short": "Eredivisie",
@@ -107,7 +120,7 @@
       "code": "FL1",
       "name": "Ligue 1",
       "short": "Ligue 1",
-      "chip": "#7FB2F0",
+      "chip": "#3F51A8",
       "source": "football-data",
       "competitionCode": "FL1",
       "teamsInLeague": 18,
@@ -260,6 +273,14 @@
       ],
       "score": 100,
       "tag": "De Klassieker"
+    },
+    {
+      "teams": [
+        "Celtic",
+        "Rangers"
+      ],
+      "score": 100,
+      "tag": "Old Firm"
     },
     {
       "teams": [
@@ -611,7 +632,8 @@
     "EFLCUP": [],
     "COPADELREY": [],
     "DFBPOKAL": [],
-    "KNVB": []
+    "KNVB": [],
+    "SPFL": []
   },
   "_starPowerOverrides": "Optional manual override, 0-100, for a genuine global icon at an otherwise unremarkable club. Keyed by exact team name.",
   "starPowerOverrides": {},
