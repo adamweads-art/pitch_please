@@ -65,9 +65,12 @@ function adaptFeed(raw) {
   // of hours ago, so the board stays current day to day rather than only on
   // Mondays. If that would empty the board (every game in the feed is done and
   // the next rebuild hasn't happened yet), keep them rather than show nothing.
+  // Mark finished matches rather than removing them here. The full slate hides
+  // them (it's a "what's on next" list), but the highlights deliberately keep
+  // them, so the week's top five stays put instead of reshuffling every time a
+  // game kicks off. A match is treated as done two hours after kickoff.
   const doneBefore = Date.now() - 2 * 60 * 60 * 1000;
-  const upcoming = all.filter((fx) => fx._kickoffMs > doneBefore);
-  const fixtures = upcoming.length ? upcoming : all;
+  const fixtures = all.map((fx) => ({ ...fx, played: fx._kickoffMs <= doneBefore }));
 
   return {
     label: raw.label || "Pitch, Please",
@@ -171,22 +174,35 @@ export default function MatchweekBoard() {
     [data, w]
   );
   const filtered = useMemo(() => scored.filter((fx) => active[fx.lg]), [scored, active]);
+
+  // Highlights are the week's best five, chosen once and held. They include
+  // matches that have already been played, so the set doesn't shuffle as the
+  // weekend goes on.
   const highlights = useMemo(
     () => [...filtered].sort((a, b) => b.score - a.score).slice(0, 5),
     [filtered]
   );
+
+  // The full slate is a "what's still to come" list, so finished matches drop
+  // off. If everything in the feed has been played and the next rebuild hasn't
+  // run yet, fall back to showing them rather than an empty board.
+  const slate = useMemo(() => {
+    const upcoming = filtered.filter((fx) => !fx.played);
+    return upcoming.length ? upcoming : filtered;
+  }, [filtered]);
+
   const board = useMemo(() => {
     if (group === "time") {
-      return [{ key: "all", label: null, items: [...filtered].sort((a, b) => a._kickoffMs - b._kickoffMs) }];
+      return [{ key: "all", label: null, items: [...slate].sort((a, b) => a._kickoffMs - b._kickoffMs) }];
     }
     if (group === "score") {
-      return [{ key: "all", label: null, items: [...filtered].sort((a, b) => b.score - a.score) }];
+      return [{ key: "all", label: null, items: [...slate].sort((a, b) => b.score - a.score) }];
     }
     // Group by whatever dates actually appear, in chronological order. A fixed
     // Fri-Mon list would silently drop midweek games (Champions League, Serie A
     // Monday nights, Liga MX).
     const byDay = new Map();
-    for (const fx of [...filtered].sort((a, b) => a._kickoffMs - b._kickoffMs)) {
+    for (const fx of [...slate].sort((a, b) => a._kickoffMs - b._kickoffMs)) {
       if (!byDay.has(fx.dayKey)) {
         byDay.set(fx.dayKey, { key: fx.dayKey, label: fx.dayLabel, items: [] });
       }
@@ -299,13 +315,13 @@ export default function MatchweekBoard() {
             </div>
           </div>
         ))}
-        {filtered.length === 0 && data.fixtures.length === 0 && (
+        {slate.length === 0 && data.fixtures.length === 0 && (
           <div className="empty">
             Nothing on the calendar right now — the feed updates every Monday night, and fixtures will
             appear here as soon as each league's schedule is announced.
           </div>
         )}
-        {filtered.length === 0 && data.fixtures.length > 0 && (
+        {slate.length === 0 && data.fixtures.length > 0 && (
           <div className="empty">No leagues selected. Switch one back on to see its fixtures.</div>
         )}
       </section>
@@ -474,7 +490,7 @@ function Meter({ sig }) {
 function HotCard({ fx, league, rank }) {
   const g = glow(fx.score);
   return (
-    <article className="hot" style={{ "--g": g, "--c": league.chip }}>
+    <article className={"hot" + (fx.played ? " is-played" : "")} style={{ "--g": g, "--c": league.chip }}>
       <div className="hot-top">
         <span className="lg-tag" style={{ color: league.chip }}>
           <span className="dot" style={{ background: league.chip }} />{league.short}
@@ -491,6 +507,7 @@ function HotCard({ fx, league, rank }) {
       </div>
       <div className="hot-bottom">
         <span className="kick">
+          {fx.played ? <span className="played-tag">Played</span> : null}
           {fx.day} {fx.date} · {fx.time}
           <AddToCalendar fx={fx} league={league} />
         </span>
@@ -642,6 +659,11 @@ const CSS = `
 
 .chip-empty{opacity:.32;cursor:default;border-style:dashed;}
 .chip-empty:hover{color:var(--muted);border-color:var(--line2);}
+.played-tag{display:inline-block;font-family:'Barlow Condensed';text-transform:uppercase;
+  letter-spacing:.1em;font-size:10px;color:var(--muted);border:1px solid var(--line2);
+  border-radius:20px;padding:1px 7px;margin-right:8px;vertical-align:middle;}
+.hot.is-played{opacity:.62;}
+.hot.is-played:hover{opacity:.85;}
 .cal{position:relative;display:inline-flex;align-items:center;margin-left:8px;vertical-align:middle;}
 .cal-compact{margin-left:6px;}
 .cal-btn{background:none;border:none;padding:2px;cursor:pointer;color:var(--muted);
