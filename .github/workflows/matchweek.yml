@@ -2,7 +2,13 @@ name: Build matchweek feed
 
 on:
   schedule:
-    - cron: "0 4 * * 2"
+    # Two attempts, both deliberately off the top of the hour. GitHub queues
+    # scheduled runs on a shared pool and drops them under load, and ":00" is
+    # by far the most contended minute. The second run is a backstop: the build
+    # overwrites the same file and the commit step skips when nothing changed,
+    # so a duplicate run is harmless.
+    - cron: "37 4 * * 2"   # Mon 9:37pm Pacific (PDT)
+    - cron: "37 6 * * 2"   # Mon 11:37pm Pacific, if the first didn't fire
   workflow_dispatch:
 
 permissions:
