@@ -159,7 +159,7 @@
       "standingsSeason": 2025,
       "fixtureSeason": 2026,
       "pullStandings": false,
-      "active": false
+      "active": true
     },
     {
       "code": "ITACUP",
@@ -316,11 +316,19 @@
     },
     {
       "teams": [
-        "Paris Saint-Germain",
+        "PSG",
         "Marseille"
       ],
       "score": 96,
       "tag": "Le Classique"
+    },
+    {
+      "teams": [
+        "Schalke",
+        "Dortmund"
+      ],
+      "score": 96,
+      "tag": "Revierderby"
     },
     {
       "teams": [
@@ -340,7 +348,7 @@
     },
     {
       "teams": [
-        "Lyon",
+        "Olympique Lyon",
         "Saint-Étienne"
       ],
       "score": 92,
@@ -356,11 +364,27 @@
     },
     {
       "teams": [
+        "HSV",
+        "Bremen"
+      ],
+      "score": 92,
+      "tag": "Nordderby"
+    },
+    {
+      "teams": [
         "Bayern",
         "Dortmund"
       ],
       "score": 90,
       "tag": "Der Klassiker"
+    },
+    {
+      "teams": [
+        "Heart of Midlothian",
+        "Hibernian"
+      ],
+      "score": 90,
+      "tag": "Edinburgh Derby"
     },
     {
       "teams": [
@@ -468,11 +492,35 @@
     },
     {
       "teams": [
+        "PSG",
+        "Olympique Lyon"
+      ],
+      "score": 80,
+      "tag": "Choc des Olympiques"
+    },
+    {
+      "teams": [
         "Feyenoord",
         "Sparta"
       ],
       "score": 78,
       "tag": "Rotterdam Derby"
+    },
+    {
+      "teams": [
+        "Frankfurt",
+        "Mainz"
+      ],
+      "score": 76,
+      "tag": "Rhein-Main Derby"
+    },
+    {
+      "teams": [
+        "Bayern",
+        "Leverkusen"
+      ],
+      "score": 74,
+      "tag": "Title rivals"
     }
   ],
   "_payrollRanks": "1 = highest wage bill in that league. Only the order matters. Blank/missing teams fall back to the league floor. Refresh once a season from Capology or FBref wages.",
@@ -603,7 +651,26 @@
       "Cambuur",
       "Telstar"
     ],
-    "FL1": [],
+    "FL1": [
+      "PSG",
+      "Marseille",
+      "Olympique Lyon",
+      "Monaco",
+      "Nice",
+      "Lille",
+      "RC Lens",
+      "Stade Rennais",
+      "Strasbourg",
+      "Toulouse",
+      "Brest",
+      "Auxerre",
+      "Angers SCO",
+      "Lorient",
+      "Le Havre",
+      "Paris FC",
+      "Le Mans",
+      "Troyes"
+    ],
     "ELC": [
       "West Ham",
       "Wolverhampton",
@@ -633,7 +700,18 @@
     "COPADELREY": [],
     "DFBPOKAL": [],
     "KNVB": [],
-    "SPFL": []
+    "SPFL": [
+      "Celtic",
+      "Rangers",
+      "Heart of Midlothian",
+      "Hibernian",
+      "Aberdeen",
+      "Motherwell",
+      "Kilmarnock",
+      "St Mirren",
+      "St Johnstone",
+      "Falkirk"
+    ]
   },
   "_starPowerOverrides": "Optional manual override, 0-100, for a genuine global icon at an otherwise unremarkable club. Keyed by exact team name.",
   "starPowerOverrides": {},
