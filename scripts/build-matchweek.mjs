@@ -53,7 +53,11 @@ const warn = (...a) => {
 async function getJSON(url, headers = {}, label = "") {
   const res = await fetch(url, { headers });
   if (!res.ok) {
-    throw new Error(`${label || url} returned ${res.status} ${res.statusText}`);
+    // Keep a little of the body: an API's error message is usually far more
+    // useful than the bare status code.
+    let detail = "";
+    try { detail = (await res.text()).slice(0, 160).replace(/\s+/g, " ").trim(); } catch {}
+    throw new Error(`${label || url} returned ${res.status} ${res.statusText}${detail ? ` | ${detail}` : ""}`);
   }
   return res.json();
 }
@@ -185,6 +189,44 @@ async function loadFootballData(league, windowDays) {
   return { teams, fixtures };
 }
 
+/**
+ * Fetch ESPN scoreboard events for the window.
+ *
+ * ESPN's scoreboard is undocumented. A date range ("dates=YYYYMMDD-YYYYMMDD")
+ * is one request and worked for months, then began returning 400 Bad Request
+ * in September 2026. Day-by-day queries are the most basic form it supports, so
+ * we try the range first and fall back to one request per day if it's refused.
+ * If ESPN fixes ranges again, we quietly go back to the fast path.
+ */
+async function espnScoreboard(league, windowDays) {
+  const fmt = (d) => d.toISOString().slice(0, 10).replace(/-/g, "");
+  const base = `${ESPN_SITE}/${league.espnSlug}/scoreboard`;
+  const range = `${fmt(new Date())}-${fmt(new Date(Date.now() + windowDays * 864e5))}`;
+
+  try {
+    const sb = await getJSON(`${base}?dates=${range}&limit=200`, {}, `${league.code} fixtures`);
+    return { events: sb.events || [], dates: range };
+  } catch (err) {
+    warn(`${league.code} range query refused (${err.message}), fetching day by day instead`);
+  }
+
+  const byId = new Map();
+  let failed = 0;
+  const days = windowDays + 1;
+  for (let i = 0; i < days; i++) {
+    const day = fmt(new Date(Date.now() + i * 864e5));
+    try {
+      const sb = await getJSON(`${base}?dates=${day}`, {}, `${league.code} ${day}`);
+      for (const ev of sb.events || []) byId.set(ev.id, ev); // dedupe across days
+    } catch {
+      failed++;
+    }
+  }
+  if (failed === days) throw new Error(`${league.code}: every day-by-day request failed`);
+  if (failed) warn(`${league.code}: ${failed} of ${days} daily requests failed; fixtures may be incomplete`);
+  return { events: [...byId.values()], dates: `${range} (day by day)` };
+}
+
 async function loadEspn(league, windowDays) {
   const teams = new Map();
 
@@ -217,18 +259,12 @@ async function loadEspn(league, windowDays) {
     }
   }
 
-  const fmt = (d) => d.toISOString().slice(0, 10).replace(/-/g, "");
-  const dates = `${fmt(new Date())}-${fmt(new Date(Date.now() + windowDays * 864e5))}`;
-  const sb = await getJSON(
-    `${ESPN_SITE}/${league.espnSlug}/scoreboard?dates=${dates}&limit=200`,
-    {},
-    `${league.code} fixtures`
-  );
+  const { events, dates } = await espnScoreboard(league, windowDays);
 
-  if (!(sb.events || []).length) {
+  if (!events.length) {
     warn(`${league.code} scoreboard returned 0 events for ${dates} (possible break in the schedule, or an ESPN change)`);
   }
-  const fixtures = (sb.events || []).map((ev) => {
+  const fixtures = events.map((ev) => {
     const comps = ev.competitions?.[0]?.competitors || [];
     const home = comps.find((c) => c.homeAway === "home") || comps[0];
     const away = comps.find((c) => c.homeAway === "away") || comps[1];
