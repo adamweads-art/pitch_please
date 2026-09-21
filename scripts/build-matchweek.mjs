@@ -37,7 +37,14 @@ const FD_DELAY_MS = 6500;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const log = (...a) => console.log(...a);
-const warn = (...a) => console.warn("  !", ...a);
+// Printed as a GitHub Actions annotation, so a skipped league shows up on the
+// run's summary page rather than only in the raw log. Without this a run can
+// look like a clean success while quietly dropping leagues.
+const warn = (...a) => {
+  const msg = a.join(" ");
+  console.warn("  !", msg);
+  if (process.env.GITHUB_ACTIONS) console.log(`::warning title=Pitch, Please::${msg}`);
+};
 
 // ---------------------------------------------------------------------------
 // Fetch helpers
@@ -131,23 +138,29 @@ function lookupRivalry(idx, home, away, fallback) {
 async function loadFootballData(league, windowDays) {
   const teams = new Map();
 
+  // Isolated from fixtures for the same reason as the ESPN adapter: a standings
+  // failure should cost us position scores, not the whole league.
   if (league.pullStandings) {
-    const q = league.standingsSeason ? `?season=${league.standingsSeason}` : "";
-    const data = await fdGet(
-      `/competitions/${league.competitionCode}/standings${q}`,
-      `${league.code} standings`
-    );
-    // standings[] holds TOTAL, HOME, AWAY in that order; TOTAL is what we want.
-    const table = data?.standings?.[0]?.table || [];
-    for (const row of table) {
-      const name = row.team?.shortName || row.team?.name;
-      if (!name) continue;
-      teams.set(name, {
-        name,
-        crest: row.team?.crest || "",
-        position: row.position,
-        form: row.form || "",
-      });
+    try {
+      const q = league.standingsSeason ? `?season=${league.standingsSeason}` : "";
+      const data = await fdGet(
+        `/competitions/${league.competitionCode}/standings${q}`,
+        `${league.code} standings`
+      );
+      // standings[] holds TOTAL, HOME, AWAY in that order; TOTAL is what we want.
+      const table = data?.standings?.[0]?.table || [];
+      for (const row of table) {
+        const name = row.team?.shortName || row.team?.name;
+        if (!name) continue;
+        teams.set(name, {
+          name,
+          crest: row.team?.crest || "",
+          position: row.position,
+          form: row.form || "",
+        });
+      }
+    } catch (err) {
+      warn(`${league.code} standings failed, continuing with fixtures only: ${err.message}`);
     }
   }
 
@@ -175,25 +188,33 @@ async function loadFootballData(league, windowDays) {
 async function loadEspn(league, windowDays) {
   const teams = new Map();
 
+  // Standings are fetched separately from fixtures. They only feed the position
+  // score, so if ESPN's standings endpoint fails we log it and carry on with
+  // fixtures rather than throwing the whole league away.
   if (league.pullStandings) {
-    const data = await getJSON(
-      `${ESPN_CORE}/${league.espnSlug}/standings`,
-      {},
-      `${league.code} standings`
-    );
-    // ESPN nests the table under children[0]; entries arrive already sorted,
-    // and carry no rank stat, so position comes from array order.
-    const entries = data?.children?.[0]?.standings?.entries || data?.standings?.entries || [];
-    entries.forEach((e, i) => {
-      const name = e.team?.displayName;
-      if (!name) return;
-      teams.set(name, {
-        name,
-        crest: e.team?.logo || (e.team?.id ? `https://a.espncdn.com/i/teamlogos/soccer/500/${e.team.id}.png` : ""),
-        position: i + 1,
-        form: "", // ESPN standings carry no recent-form string
+    try {
+      const data = await getJSON(
+        `${ESPN_CORE}/${league.espnSlug}/standings`,
+        {},
+        `${league.code} standings`
+      );
+      // ESPN nests the table under children[0]; entries arrive already sorted,
+      // and carry no rank stat, so position comes from array order.
+      const entries = data?.children?.[0]?.standings?.entries || data?.standings?.entries || [];
+      if (!entries.length) warn(`${league.code} standings came back empty; positions default to neutral`);
+      entries.forEach((e, i) => {
+        const name = e.team?.displayName;
+        if (!name) return;
+        teams.set(name, {
+          name,
+          crest: e.team?.logo || (e.team?.id ? `https://a.espncdn.com/i/teamlogos/soccer/500/${e.team.id}.png` : ""),
+          position: i + 1,
+          form: "", // ESPN standings carry no recent-form string
+        });
       });
-    });
+    } catch (err) {
+      warn(`${league.code} standings failed, continuing with fixtures only: ${err.message}`);
+    }
   }
 
   const fmt = (d) => d.toISOString().slice(0, 10).replace(/-/g, "");
@@ -204,6 +225,9 @@ async function loadEspn(league, windowDays) {
     `${league.code} fixtures`
   );
 
+  if (!(sb.events || []).length) {
+    warn(`${league.code} scoreboard returned 0 events for ${dates} (possible break in the schedule, or an ESPN change)`);
+  }
   const fixtures = (sb.events || []).map((ev) => {
     const comps = ev.competitions?.[0]?.competitors || [];
     const home = comps.find((c) => c.homeAway === "home") || comps[0];
